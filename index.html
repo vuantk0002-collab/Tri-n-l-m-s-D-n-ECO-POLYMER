@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ECO-POLYMER 4.0 • Triển lãm Số 3D Vì Trái Đất Xanh</title>
+
+    <!-- Google Fonts: Baloo 2 & Nunito -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Three.js r128 CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        forest: '#1B5E20',
+                        emeraldEco: '#2E7D32',
+                        mintDark: '#1E6F5C',
+                        mintSoft: '#E8F5E9',
+                        mintPastel: '#C8E6C9',
+                        sage: '#81C784',
+                        goldEco: '#D4AF37',
+                        creamEco: '#FAFDF7',
+                    },
+                    fontFamily: {
+                        heading: ['"Baloo 2"', 'cursive'],
+                        body: ['"Nunito"', 'sans-serif'],
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Nunito', sans-serif;
+            background-color: #e6f4ea;
+            user-select: none;
+        }
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+            touch-action: none;
+        }
+        #canvas-container:active {
+            cursor: grabbing;
+        }
+        .glass-eco {
+            background: rgba(250, 253, 247, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(46, 125, 50, 0.28);
+        }
+        .glass-modal {
+            background: rgba(250, 253, 247, 0.98);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 2px solid rgba(46, 125, 50, 0.35);
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #e8f5e9;
+            border-radius: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #66bb6a;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- 3D WebGL Canvas Container -->
+    <div id="canvas-container"></div>
+
+    <!-- Top Header Bar -->
+    <header class="fixed top-0 left-0 right-0 z-20 p-2.5 sm:p-3.5 pointer-events-none">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <!-- Brand Title -->
+            <div class="glass-eco rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 flex items-center gap-2.5 pointer-events-auto shadow-lg">
+                <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-white text-lg sm:text-xl shadow-inner shrink-0">
+                    🌿
+                </div>
+                <div class="leading-tight">
+                    <h1 class="font-heading font-extrabold text-sm sm:text-base md:text-lg text-forest tracking-wide">
+                        ECO-POLYMER 4.0 • TRIỂN LÃM SỐ 3D
+                    </h1>
+                    <p class="text-[11px] sm:text-xs text-emerald-800/80 font-bold">
+                        Vì Trái Đất Xanh • Kéo xoay 360° hoặc nhấp vào tranh để xem chi tiết
+                    </p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 -translate-y-2.5">
+        <div class="bg-emerald-800 border-2 border-emerald-300 text-white px-5 py-2.5 rounded-2xl shadow-2xl font-bold text-xs sm:text-sm flex items-center gap-2 whitespace-nowrap">
+            <span id="toast-icon">🌱</span>
+            <span id="toast-message">Thông báo</span>
+        </div>
+    </div>
+
+    <!-- Subtle Drag-and-Drop Overlay (only shown while dragging image files over the window) -->
+    <div id="drop-overlay" class="fixed inset-0 z-50 bg-emerald-950/70 backdrop-blur-sm hidden items-center justify-center p-6 pointer-events-none">
+        <div class="border-4 border-dashed border-emerald-300 bg-emerald-900/80 text-white rounded-3xl px-8 py-10 text-center max-w-md shadow-2xl">
+            <div class="text-5xl mb-3">🖼️</div>
+            <p class="font-heading font-extrabold text-xl sm:text-2xl mb-1">Thả 4 ảnh (1.jpg – 4.jpg) vào đây</p>
+            <p class="text-xs sm:text-sm text-emerald-100">Ảnh sẽ tự động sắp xếp từ 1 đến 4 và dán trực tiếp lên 4 khung tranh 3D</p>
+        </div>
+    </div>
+
+    <!-- Bottom Control Bar -->
+    <nav class="fixed bottom-3 left-0 right-0 z-20 px-2.5 sm:px-4 pointer-events-none">
+        <div class="max-w-3xl mx-auto glass-eco rounded-2xl p-2 sm:p-2.5 flex flex-wrap items-center justify-between gap-2 pointer-events-auto shadow-xl">
+
+            <!-- Prev / Counter / Next -->
+            <div class="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center sm:justify-start">
+                <button id="btn-prev" class="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold transition-all active:scale-95 flex items-center gap-1 shadow-sm">
+                    <span>⬅️</span>
+                    <span class="hidden sm:inline">Bức trước</span>
+                </button>
+
+                <div class="bg-mintSoft border border-emerald-600/30 rounded-xl px-3 py-2 text-xs sm:text-sm font-heading font-extrabold text-forest min-w-[116px] sm:min-w-[136px] text-center">
+                    Tác phẩm <span id="artwork-counter" class="text-emerald-700 text-sm sm:text-base">01</span> / 04
+                </div>
+
+                <button id="btn-next" class="bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl px-3 py-2 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold transition-all active:scale-95 flex items-center gap-1 shadow-sm">
+                    <span class="hidden sm:inline">Bức tiếp theo</span>
+                    <span>➡️</span>
+                </button>
+            </div>
+
+            <!-- Auto Tour & Reset Center -->
+            <div class="flex items-center gap-1.5 sm:gap-2 justify-center w-full sm:w-auto">
+                <button id="btn-autotour" class="flex-1 sm:flex-none bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-xl px-3.5 py-2 text-xs sm:text-sm font-extrabold transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5">
+                    <span id="autotour-icon">▶️</span>
+                    <span id="autotour-text">Tự động tham quan</span>
+                </button>
+                <button id="btn-reset" title="Về giữa sảnh" class="bg-mintSoft hover:bg-mintPastel border border-emerald-600/30 text-forest rounded-xl px-3 py-2 text-xs sm:text-sm font-extrabold transition-all active:scale-95 flex items-center gap-1">
+                    <span>🏛️</span>
+                    <span class="hidden md:inline">Về giữa sảnh</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Lightbox Modal for Artwork Details -->
+    <div id="artwork-modal" class="fixed inset-0 z-50 bg-emerald-950/75 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-5">
+        <div class="glass-modal rounded-3xl max-w-4xl w-full max-h-[92vh] flex flex-col md:flex-row overflow-hidden shadow-2xl relative">
+
+            <!-- Close Button -->
+            <button id="btn-close-modal" aria-label="Đóng" class="absolute top-3 right-3 z-10 w-10 h-10 rounded-full bg-emerald-700 hover:bg-emerald-800 text-white border-2 border-emerald-200 flex items-center justify-center font-bold text-lg shadow-lg transition-transform active:scale-90">
+                ✕
+            </button>
+
+            <!-- Left: High-res Image Preview -->
+            <div class="w-full md:w-1/2 bg-gradient-to-br from-emerald-900 to-teal-900 p-4 flex items-center justify-center relative min-h-[250px] max-h-[45vh] md:max-h-[85vh]">
+                <img id="modal-image" src="" alt="Tác phẩm ECO-POLYMER 4.0" class="max-h-full max-w-full object-contain rounded-2xl border-2 border-emerald-300/80 shadow-2xl">
+                <span id="modal-badge" class="absolute top-3 left-3 bg-emerald-100 text-forest font-heading font-extrabold text-xs sm:text-sm px-3 py-1 rounded-xl shadow border border-emerald-400">
+                    Tác phẩm 01 / 04
+                </span>
+            </div>
+
+            <!-- Right: Info & English Voice Narration -->
+            <div class="w-full md:w-1/2 p-5 sm:p-6 flex flex-col justify-between bg-creamEco text-slate-800 overflow-y-auto custom-scroll">
+                <div>
+                    <p id="modal-category" class="text-xs font-extrabold uppercase tracking-wider text-emerald-700 mb-1">
+                        SẢN PHẨM SINH HỌC
+                    </p>
+                    <h2 id="modal-title" class="font-heading font-extrabold text-xl sm:text-2xl text-forest leading-snug mb-3">
+                        Tiêu đề tác phẩm
+                    </h2>
+                    <div class="w-16 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full mb-4"></div>
+                    <p id="modal-desc" class="text-sm sm:text-base text-slate-700 leading-relaxed mb-5">
+                        Nội dung mô tả chi tiết...
+                    </p>
+                    <div id="modal-highlights" class="bg-mintSoft/80 border border-emerald-200 rounded-2xl p-3.5 text-xs sm:text-sm text-emerald-900 space-y-1 mb-5">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-3 border-t border-emerald-200">
+                    <!-- English Voice Narration Button -->
+                    <button id="btn-speak" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold py-3 px-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-md">
+                        <span id="speak-icon">🔊</span>
+                        <span id="speak-text">Nghe thuyết minh (Tiếng Anh)</span>
+                    </button>
+
+                    <!-- Modal Prev / Next -->
+                    <div class="flex items-center justify-between gap-2">
+                        <button id="modal-prev" class="flex-1 bg-emerald-100 hover:bg-emerald-200 text-forest font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm transition-all active:scale-95">
+                            ⬅️ Tác phẩm trước
+                        </button>
+                        <button id="modal-next" class="flex-1 bg-emerald-100 hover:bg-emerald-200 text-forest font-bold py-2.5 px-3 rounded-xl text-xs sm:text-sm transition-all active:scale-95">
+                            Tác phẩm sau ➡️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main 3D Application Script -->
+    <script>
+        /* ==========================================================================
+           1. DỮ LIỆU 4 TÁC PHẨM CHỦ ĐỀ ECO-POLYMER 4.0
+           ========================================================================== */
+        const ARTWORKS_DATA = [
+            {
+                id: 1,
+                image: "1.jpg",
+                category: "Ứng dụng Nông nghiệp Xanh",
+                title: "Túi ươm cây sinh học",
+                desc: "Màng polymer sinh học được chế tạo từ tinh bột, glycerin và giấm ăn. Sản phẩm có khả năng tự phân hủy hoàn toàn trong đất sau thời gian ngắn, giúp rễ cây con phát triển tự nhiên mà không cần xé bỏ bầu ươm, hạn chế tối đa rác thải nhựa trong nông nghiệp.",
+                titleEn: "Biodegradable Seedling Bags",
+                descEn: "This bioplastic film is made from starch, glycerin, and vinegar. It decomposes completely in the soil within a short time, allowing young plant roots to grow naturally without removing the bag and minimizing plastic waste in agriculture.",
+                highlights: [
+                    "🌱 Thành phần 100% tự nhiên từ tinh bột, glycerin thực vật và giấm ăn.",
+                    "🌍 Tự phân hủy sinh học hoàn toàn trong đất, thân thiện với hệ vi sinh."
+                ],
+                icon: "🌱",
+                accent: "#2E7D32",
+                bgLight: "#E8F5E9"
+            },
+            {
+                id: 2,
+                image: "2.jpg",
+                category: "Giải pháp Thay thế Nhựa Dùng Một Lần",
+                title: "Túi sinh học thân thiện với môi trường",
+                desc: "Giải pháp thay thế túi nilon truyền thống với độ dẻo dai ổn định, bề mặt trong mịn, an toàn khi tiếp xúc thực phẩm khô và đồ dùng hằng ngày. Sản phẩm góp phần thiết thực giảm thiểu ô nhiễm vi nhựa và bảo vệ hệ sinh thái.",
+                titleEn: "Eco-Friendly Bioplastic Bags",
+                descEn: "An alternative to single-use plastic bags with stable flexibility and a smooth, clear surface, safe for dry food and everyday items. This product helps reduce microplastic pollution and protect our ecosystem.",
+                highlights: [
+                    "🛍️ Độ dẻo dai tốt, an toàn khi đựng thực phẩm khô và vật dụng nhẹ.",
+                    "♻️ Giảm thiểu rác thải nilon khó phân hủy và ngăn ngừa ô nhiễm vi nhựa."
+                ],
+                icon: "🛍️",
+                accent: "#00796B",
+                bgLight: "#E0F2F1"
+            },
+            {
+                id: 3,
+                image: "3.jpg",
+                category: "Giáo dục & Sáng tạo STEAM",
+                title: "Tò he 4.0 & Sáng tạo xanh",
+                desc: "Kết hợp tinh hoa nghệ thuật dân gian truyền thống với vật liệu polymer sinh học an toàn, tạo màu hoàn toàn từ nguyên liệu tự nhiên (lá dứa, nghệ, hoa đậu biếc...). Mô hình giúp lan tỏa thông điệp sống xanh và khơi dậy niềm đam mê khoa học đến học sinh.",
+                titleEn: "To He 4.0 and Green Creativity",
+                descEn: "Combining traditional Vietnamese folk figurine art with safe bioplastic materials colored entirely by natural ingredients such as pandan leaves, turmeric, and butterfly pea flowers. This model spreads a green living message and inspires a passion for science among students.",
+                highlights: [
+                    "🎨 Sắc màu hoàn toàn tự nhiên, an toàn tuyệt đối cho học sinh trải nghiệm.",
+                    "✨ Giao thoa giữa bản sắc văn hóa dân gian và vật liệu sinh học hiện đại."
+                ],
+                icon: "🎨",
+                accent: "#558B2F",
+                bgLight: "#F1F8E9"
+            },
+            {
+                id: 4,
+                image: "4.jpg",
+                category: "Lối sống Xanh & Bền vững",
+                title: "Gửi trao yêu thương",
+                desc: "Màng bọc quà tặng và màng bọc xà phòng thủ công sinh học có tính thẩm mỹ cao, mềm mịn, thân thiện với làn da và môi trường. Mỗi món quà được gói bằng vật liệu sinh học là một lời nhắn gửi yêu thương và cam kết sống xanh bền vững.",
+                titleEn: "Sending Love Sustainably",
+                descEn: "Aesthetic, soft bioplastic gift wrap and handmade herbal soap wrap that is gentle on the skin and friendly to the environment. Every gift wrapped in bioplastic carries a message of love and a commitment to sustainable green living.",
+                highlights: [
+                    "🎁 Thẩm mỹ tinh tế, phù hợp bọc quà tặng và xà phòng thảo mộc thủ công.",
+                    "💚 An toàn cho làn da, lan tỏa thói quen tiêu dùng xanh trong cộng đồng."
+                ],
+                icon: "🎁",
+                accent: "#00695C",
+                bgLight: "#E8F6F3"
+            }
+        ];
+
+        /* ==========================================================================
+           2. BIẾN TOÀN CỤC THREE.JS & TRẠNG THÁI ỨNG DỤNG
+           ========================================================================== */
+        let scene, camera, renderer, raycaster;
+        let artworkMeshes = [];
+        let artworkDataUrls = new Array(4).fill(null);
+
+        // Điều khiển camera 360 độ
+        let yaw = 0;         // 0 = nhìn thẳng về tường cuối phòng (-Z)
+        let pitch = -0.02;
+        let isDragging = false;
+        let lastPointerPos = { x: 0, y: 0 };
+        let dragDistance = 0;
+
+        // Di chuyển bàn phím
+        const keysPressed = {};
+        const ROOM_BOUNDS = { minX: -4.4, maxX: 4.4, minZ: -6.8, maxZ: 7.8 };
+
+        // Lướt mượt & Tự động tham quan
+        let currentArtworkIndex = 0;
+        let isGliding = false;
+        let glideTargetPos = new THREE.Vector3();
+        let glideTargetYaw = 0;
+        let glideTargetPitch = 0;
+
+        let isAutoTour = false;
+        let autoTourTimer = null;
+        // Giọng đọc tiếng Anh (Web Speech API)
+        let isSpeaking = false;
+        let hasShownLocalCorsHint = false;
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }
+
+        /* ==========================================================================
+           3. TẠO TEXTURE PROCEDURAL PHONG CÁCH ECO-PASTEL
+           ========================================================================== */
+
+        // Sàn gỗ sáng ấm áp
+        function createLightWoodFloorTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#e7d5bc';
+            ctx.fillRect(0, 0, 512, 512);
+
+            const plankH = 64;
+            const tones = ['#ebd9c1', '#e4d0b4', '#eedec8', '#e1cca9'];
+            for (let row = 0; row < 8; row++) {
+                const y = row * plankH;
+                const offset = (row % 2) * 128;
+                for (let col = -1; col < 3; col++) {
+                    const x = col * 256 + offset;
+                    ctx.fillStyle = tones[(row + col + 4) % tones.length];
+                    ctx.fillRect(x, y, 254, plankH - 2);
+
+                    // Đường vân gỗ mềm mại
+                    ctx.strokeStyle = 'rgba(160, 120, 76, 0.12)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + plankH * 0.35);
+                    ctx.bezierCurveTo(x + 80, y + plankH * 0.25, x + 170, y + plankH * 0.45, x + 254, y + plankH * 0.35);
+                    ctx.stroke();
+
+                    ctx.strokeStyle = 'rgba(130, 96, 58, 0.18)';
+                    ctx.strokeRect(x, y, 254, plankH - 2);
+                }
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(4, 6);
+            return tex;
+        }
+
+        // Thảm lối đi xanh lá mềm mại
+        function createEcoCarpetTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#5fa777';
+            ctx.fillRect(0, 0, 256, 256);
+
+            // Viền kem & vàng ánh nhẹ hai bên
+            ctx.fillStyle = '#e8f5e9';
+            ctx.fillRect(10, 0, 10, 256);
+            ctx.fillRect(236, 0, 10, 256);
+            ctx.fillStyle = '#d4af37';
+            ctx.fillRect(24, 0, 4, 256);
+            ctx.fillRect(228, 0, 4, 256);
+
+            // Họa tiết lá cách điệu chìm ở giữa
+            ctx.strokeStyle = 'rgba(232, 245, 233, 0.22)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(128, 36);
+            ctx.quadraticCurveTo(168, 128, 128, 220);
+            ctx.quadraticCurveTo(88, 128, 128, 36);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(128, 48);
+            ctx.lineTo(128, 208);
+            ctx.stroke();
+
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = THREE.RepeatWrapping;
+            tex.wrapT = THREE.RepeatWrapping;
+            tex.repeat.set(1, 6);
+            return tex;
+        }
+
+        // Bảng hiệu nổi bật ở tường cuối phòng
+        function createEcoBannerTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1600;
+            canvas.height = 460;
+            const ctx = canvas.getContext('2d');
+
+            // Nền xanh ngọc – xanh lá sinh thái gradient dịu mắt
+            const grad = ctx.createLinearGradient(0, 0, 1600, 460);
+            grad.addColorStop(0, '#1b5e20');
+            grad.addColorStop(0.5, '#2e7d32');
+            grad.addColorStop(1, '#1e6f5c');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1600, 460);
+
+            // Vòng sáng trang trí mờ
+            ctx.fillStyle = 'rgba(200, 230, 201, 0.08)';
+            ctx.beginPath();
+            ctx.arc(140, 100, 180, 0, Math.PI * 2);
+            ctx.arc(1460, 360, 200, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Khung viền ánh vàng & kem pastel
+            ctx.strokeStyle = '#d4af37';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(18, 18, 1564, 424);
+            ctx.strokeStyle = '#c8e6c9';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(34, 34, 1532, 392);
+
+            // Biểu tượng lá xanh phía trên
+            ctx.fillStyle = '#c8e6c9';
+            ctx.font = 'bold 48px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🌿  •  🌱  •  🌿', 800, 102);
+
+            // Tiêu đề chính
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 72px "Baloo 2", sans-serif';
+            ctx.fillText('TRIỂN LÃM SỐ ECO-POLYMER 4.0', 800, 212);
+
+            // Thanh phân cách vàng đồng
+            ctx.fillStyle = '#d4af37';
+            ctx.fillRect(460, 248, 680, 5);
+
+            // Phụ đề theo đúng yêu cầu
+            ctx.fillStyle = '#e8f5e9';
+            ctx.font = '800 40px "Nunito", sans-serif';
+            ctx.fillText('CHẾ TẠO MÀNG BỌC SINH HỌC VÌ TRÁI ĐẤT XANH', 800, 330);
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // Poster minh họa sắc nét bằng HTML5 Canvas khi chưa có ảnh thật (trả về trực tiếp canvas để dùng CanvasTexture an toàn)
+        function createEcoFallbackPosterCanvas(art) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 660;
+            canvas.height = 880; // Tỷ lệ chuẩn 3:4
+            const ctx = canvas.getContext('2d');
+
+            // Nền pastel sinh thái
+            const grad = ctx.createLinearGradient(0, 0, 0, 880);
+            grad.addColorStop(0, art.bgLight);
+            grad.addColorStop(1, '#ffffff');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 660, 880);
+
+            // Họa tiết tròn mềm trang trí góc
+            ctx.fillStyle = 'rgba(129, 199, 132, 0.18)';
+            ctx.beginPath();
+            ctx.arc(580, 110, 140, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(70, 760, 120, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Khung viền xanh ngọc + ánh vàng
+            ctx.strokeStyle = art.accent;
+            ctx.lineWidth = 10;
+            ctx.strokeRect(20, 20, 620, 840);
+            ctx.strokeStyle = '#D4AF37';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(34, 34, 592, 812);
+
+            // Dải tiêu đề chuyên mục trên cùng
+            ctx.fillStyle = art.accent;
+            ctx.fillRect(36, 36, 588, 72);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 22px "Nunito", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(art.category.toUpperCase(), 330, 80);
+
+            // Huy hiệu tròn lớn ở giữa trên
+            ctx.beginPath();
+            ctx.arc(330, 255, 110, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = art.accent;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(330, 255, 96, 0, Math.PI * 2);
+            ctx.fillStyle = art.bgLight;
+            ctx.fill();
+
+            // Biểu tượng chủ đề
+            ctx.font = '92px sans-serif';
+            ctx.fillText(art.icon, 330, 286);
+
+            // Nhãn số thứ tự
+            const numStr = String(art.id).padStart(2, '0');
+            ctx.fillStyle = '#D4AF37';
+            ctx.fillRect(245, 346, 170, 38);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 22px "Baloo 2", sans-serif';
+            ctx.fillText(`SẢN PHẨM ${numStr}`, 330, 372);
+
+            // Tiêu đề sản phẩm
+            ctx.fillStyle = '#1b5e20';
+            ctx.font = '800 38px "Baloo 2", sans-serif';
+            wrapText(ctx, art.title, 330, 448, 520, 46);
+
+            // Đường phân cách
+            ctx.fillStyle = '#D4AF37';
+            ctx.fillRect(210, 540, 240, 4);
+
+            // Mô tả ngắn gọn
+            ctx.fillStyle = '#334155';
+            ctx.font = '600 22px "Nunito", sans-serif';
+            wrapText(ctx, art.desc, 330, 592, 520, 32);
+
+            // Chân trang
+            ctx.fillStyle = art.accent;
+            ctx.font = '700 18px "Nunito", sans-serif';
+            ctx.fillText(`ECO-POLYMER 4.0 • Chế tạo màng bọc sinh học vì Trái Đất xanh`, 330, 818);
+
+            return {
+                canvas: canvas,
+                dataUrl: canvas.toDataURL('image/jpeg', 0.92)
+            };
+        }
+
+        function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let currentY = y;
+            for (let i = 0; i < words.length; i++) {
+                const testLine = line + words[i] + ' ';
+                if (ctx.measureText(testLine).width > maxWidth && i > 0) {
+                    ctx.fillText(line.trim(), x, currentY);
+                    line = words[i] + ' ';
+                    currentY += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line.trim(), x, currentY);
+        }
+
+        /* ==========================================================================
+           4. KHỞI TẠO KHÔNG GIAN PHÒNG TRIỂN LÃM 3D ECO-PASTEL
+           ========================================================================== */
+        function init3DScene() {
+            const container = document.getElementById('canvas-container');
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xdff2e5);
+            scene.fog = new THREE.Fog(0xdff2e5, 22, 42);
+
+            camera = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 0.1, 80);
+            // Đứng ở sảnh vào để nhìn rõ cả 4 bức tranh + bảng hiệu cuối phòng ngay lập tức
+            camera.position.set(0, 2.2, 7.5);
+            camera.rotation.order = 'YXZ';
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            raycaster = new THREE.Raycaster();
+
+            buildLights();
+            buildEcoGalleryRoom();
+            buildCornerPlants();
+            buildFourArtworks();
+        }
+
+        function buildLights() {
+            // Ánh sáng môi trường dịu mắt, cân bằng để sàn gỗ và tường pastel không bị chói trắng
+            const ambient = new THREE.AmbientLight(0xfffdf5, 0.58);
+            scene.add(ambient);
+
+            // Ánh sáng bán cầu xanh nhạt – gỗ ấm
+            const hemi = new THREE.HemisphereLight(0xf3fff6, 0xbca88e, 0.30);
+            hemi.position.set(0, 6, 0);
+            scene.add(hemi);
+
+            // Đèn trần ấm áp dọc sảnh
+            const lampZ = [4.5, 0, -4.5];
+            const brassMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.65, roughness: 0.3 });
+            const bulbMat = new THREE.MeshBasicMaterial({ color: 0xfffbe6 });
+
+            lampZ.forEach(z => {
+                const pt = new THREE.PointLight(0xfff4dd, 0.32, 16, 1.6);
+                pt.position.set(0, 4.9, z);
+                scene.add(pt);
+
+                const fixture = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.32, 0.14, 24), brassMat);
+                fixture.position.set(0, 5.52, z);
+                scene.add(fixture);
+
+                const bulb = new THREE.Mesh(new THREE.CircleGeometry(0.28, 20), bulbMat);
+                bulb.rotation.x = Math.PI / 2;
+                bulb.position.set(0, 5.44, z);
+                scene.add(bulb);
+            });
+        }
+
+        function buildEcoGalleryRoom() {
+            const roomW = 12;
+            const roomH = 5.6;
+            const roomL = 18;
+
+            // Sàn gỗ sáng ấm áp
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(roomW, roomL),
+                new THREE.MeshStandardMaterial({
+                    map: createLightWoodFloorTexture(),
+                    roughness: 0.38,
+                    metalness: 0.05
+                })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+
+            // Lối đi thảm xanh lá mềm mại ở giữa
+            const carpet = new THREE.Mesh(
+                new THREE.PlaneGeometry(3.4, roomL - 1.6),
+                new THREE.MeshStandardMaterial({
+                    map: createEcoCarpetTexture(),
+                    roughness: 0.88
+                })
+            );
+            carpet.rotation.x = -Math.PI / 2;
+            carpet.position.y = 0.014;
+            scene.add(carpet);
+
+            // Trần màu trắng kem sáng
+            const ceiling = new THREE.Mesh(
+                new THREE.PlaneGeometry(roomW, roomL),
+                new THREE.MeshStandardMaterial({ color: 0xfafffa, roughness: 0.9 })
+            );
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.position.y = roomH;
+            scene.add(ceiling);
+
+            // Tường xanh mint pastel / kem trắng dịu mắt
+            const sideWallMat = new THREE.MeshStandardMaterial({ color: 0xeaf6ee, roughness: 0.88 });
+            const endWallMat = new THREE.MeshStandardMaterial({ color: 0xd9efe1, roughness: 0.85 });
+            const woodTrimMat = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.55 });
+            const goldTrimMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.7, roughness: 0.25 });
+
+            // Tường trái & phải
+            const sideWallGeo = new THREE.PlaneGeometry(roomL, roomH);
+            const leftWall = new THREE.Mesh(sideWallGeo, sideWallMat);
+            leftWall.position.set(-roomW / 2, roomH / 2, 0);
+            leftWall.rotation.y = Math.PI / 2;
+            scene.add(leftWall);
+
+            const rightWall = new THREE.Mesh(sideWallGeo, sideWallMat);
+            rightWall.position.set(roomW / 2, roomH / 2, 0);
+            rightWall.rotation.y = -Math.PI / 2;
+            scene.add(rightWall);
+
+            // Len chân tường gỗ & phào chỉ ánh vàng hai bên
+            [-1, 1].forEach(side => {
+                const baseboard = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.28, roomL), woodTrimMat);
+                baseboard.position.set(side * (roomW / 2 - 0.05), 0.14, 0);
+                scene.add(baseboard);
+
+                const crown = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, roomL), goldTrimMat);
+                crown.position.set(side * (roomW / 2 - 0.06), roomH - 0.06, 0);
+                scene.add(crown);
+            });
+
+            // Tường cuối phòng (-Z) & Tường lối vào (+Z)
+            const endWallGeo = new THREE.PlaneGeometry(roomW, roomH);
+            const backWall = new THREE.Mesh(endWallGeo, endWallMat);
+            backWall.position.set(0, roomH / 2, -roomL / 2);
+            scene.add(backWall);
+
+            const frontWall = new THREE.Mesh(endWallGeo, sideWallMat);
+            frontWall.position.set(0, roomH / 2, roomL / 2);
+            frontWall.rotation.y = Math.PI;
+            scene.add(frontWall);
+
+            // Bảng hiệu nổi bật ở tường cuối phòng
+            const banner = new THREE.Mesh(
+                new THREE.PlaneGeometry(8.8, 2.55),
+                new THREE.MeshBasicMaterial({ map: createEcoBannerTexture() })
+            );
+            banner.position.set(0, 3.25, -roomL / 2 + 0.08);
+            scene.add(banner);
+
+            // Bục trưng bày gỗ xanh trang trí dưới bảng hiệu
+            const podium = new THREE.Mesh(
+                new THREE.BoxGeometry(4.4, 0.38, 1.1),
+                new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.5 })
+            );
+            podium.position.set(0, 0.19, -roomL / 2 + 0.65);
+            scene.add(podium);
+
+            const podiumTop = new THREE.Mesh(
+                new THREE.BoxGeometry(4.5, 0.06, 1.18),
+                new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.65, roughness: 0.3 })
+            );
+            podiumTop.position.set(0, 0.4, -roomL / 2 + 0.65);
+            scene.add(podiumTop);
+        }
+
+        // Các chậu cây xanh 3D đơn giản ở 4 góc phòng
+        function buildCornerPlants() {
+            const corners = [
+                { x: -4.9, z: -7.9 },
+                { x: 4.9, z: -7.9 },
+                { x: -4.9, z: 7.9 },
+                { x: 4.9, z: 7.9 }
+            ];
+
+            const potMat = new THREE.MeshStandardMaterial({ color: 0xf5f5f0, roughness: 0.5 });
+            const potRimMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.6, roughness: 0.3 });
+            const soilMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.95 });
+            const trunkMat = new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.85 });
+            const leafMat1 = new THREE.MeshStandardMaterial({ color: 0x2e7d32, roughness: 0.7 });
+            const leafMat2 = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 0.7 });
+            const leafMat3 = new THREE.MeshStandardMaterial({ color: 0x66bb6a, roughness: 0.7 });
+
+            corners.forEach(pos => {
+                const plant = new THREE.Group();
+                plant.position.set(pos.x, 0, pos.z);
+
+                // Chậu gốm trắng kem
+                const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.3, 0.68, 18), potMat);
+                pot.position.y = 0.34;
+                plant.add(pot);
+
+                const rim = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.03, 10, 24), potRimMat);
+                rim.rotation.x = Math.PI / 2;
+                rim.position.y = 0.68;
+                plant.add(rim);
+
+                const soil = new THREE.Mesh(new THREE.CircleGeometry(0.39, 16), soilMat);
+                soil.rotation.x = -Math.PI / 2;
+                soil.position.y = 0.66;
+                plant.add(soil);
+
+                // Thân cây
+                const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 1.05, 10), trunkMat);
+                trunk.position.y = 1.15;
+                plant.add(trunk);
+
+                // Tán lá xanh nhiều lớp sinh động
+                const foliage1 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.55, 1), leafMat1);
+                foliage1.position.set(0, 1.85, 0);
+                plant.add(foliage1);
+
+                const foliage2 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.42, 1), leafMat2);
+                foliage2.position.set(0.24, 1.62, 0.16);
+                plant.add(foliage2);
+
+                const foliage3 = new THREE.Mesh(new THREE.DodecahedronGeometry(0.38, 1), leafMat3);
+                foliage3.position.set(-0.22, 2.08, -0.12);
+                plant.add(foliage3);
+
+                scene.add(plant);
+            });
+        }
+
+        // Bố trí 4 khung tranh 3D kích thước lớn (2 trái, 2 phải)
+        function buildFourArtworks() {
+            const frameOuterMat = new THREE.MeshStandardMaterial({
+                color: 0x1e6f5c, // Xanh ngọc đậm sang trọng
+                roughness: 0.35,
+                metalness: 0.25
+            });
+            const frameInnerGoldMat = new THREE.MeshStandardMaterial({
+                color: 0xd4af37, // Viền ánh vàng bên trong
+                metalness: 0.78,
+                roughness: 0.24
+            });
+            const lampMat = new THREE.MeshStandardMaterial({
+                color: 0xc5a028,
+                metalness: 0.78,
+                roughness: 0.28
+            });
+            const bulbMat = new THREE.MeshBasicMaterial({ color: 0xfffce0 });
+
+            const posterW = 2.45;
+            const posterH = 3.25; // Khung lớn rõ nét, tỷ lệ 3:4
+
+            // Vị trí vòng chữ U: 1 (Trái gần) -> 2 (Trái xa) -> 3 (Phải xa) -> 4 (Phải gần)
+            const placements = [
+                { isLeft: true,  x: -5.88, z:  2.7, rotY:  Math.PI / 2 },
+                { isLeft: true,  x: -5.88, z: -2.9, rotY:  Math.PI / 2 },
+                { isLeft: false, x:  5.88, z: -2.9, rotY: -Math.PI / 2 },
+                { isLeft: false, x:  5.88, z:  2.7, rotY: -Math.PI / 2 }
+            ];
+
+            ARTWORKS_DATA.forEach((art, idx) => {
+                const pos = placements[idx];
+                const group = new THREE.Group();
+                group.position.set(pos.x, 2.55, pos.z);
+                group.rotation.y = pos.rotY;
+
+                // Khung ngoài xanh ngọc
+                const outerFrame = new THREE.Mesh(
+                    new THREE.BoxGeometry(posterW + 0.3, posterH + 0.3, 0.1),
+                    frameOuterMat
+                );
+                group.add(outerFrame);
+
+                // Viền ánh vàng kim bên trong
+                const innerGoldFrame = new THREE.Mesh(
+                    new THREE.BoxGeometry(posterW + 0.12, posterH + 0.12, 0.115),
+                    frameInnerGoldMat
+                );
+                group.add(innerGoldFrame);
+
+                // Tạo poster mặc định trực tiếp từ CanvasTexture (đồng bộ, luôn hiển thị rõ nét, không bao giờ bị đen)
+                const fallbackPoster = createEcoFallbackPosterCanvas(art);
+                artworkDataUrls[idx] = fallbackPoster.dataUrl;
+
+                const fallbackTex = new THREE.CanvasTexture(fallbackPoster.canvas);
+                fallbackTex.encoding = THREE.sRGBEncoding;
+                fallbackTex.minFilter = THREE.LinearFilter;
+                fallbackTex.magFilter = THREE.LinearFilter;
+                fallbackTex.generateMipmaps = false;
+                fallbackTex.needsUpdate = true;
+
+                // Dùng MeshBasicMaterial để tranh luôn tươi sáng, sắc nét ở mọi góc nhìn
+                const posterMat = new THREE.MeshBasicMaterial({
+                    map: fallbackTex
+                });
+
+                const posterMesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(posterW, posterH),
+                    posterMat
+                );
+                posterMesh.position.z = 0.064;
+                posterMesh.userData = {
+                    artworkIndex: idx,
+                    isLeft: pos.isLeft,
+                    worldZ: pos.z
+                };
+                group.add(posterMesh);
+                artworkMeshes.push(posterMesh);
+
+                // Đèn rọi tranh gắn phía trên khung
+                const lampArm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.45, 10), lampMat);
+                lampArm.rotation.x = Math.PI / 2;
+                lampArm.position.set(0, posterH / 2 + 0.3, 0.2);
+                group.add(lampArm);
+
+                const lampBar = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 1.15, 12), lampMat);
+                lampBar.rotation.z = Math.PI / 2;
+                lampBar.position.set(0, posterH / 2 + 0.3, 0.4);
+                group.add(lampBar);
+
+                const lampGlow = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 0.09), bulbMat);
+                lampGlow.rotation.x = Math.PI / 2;
+                lampGlow.position.set(0, posterH / 2 + 0.25, 0.4);
+                group.add(lampGlow);
+
+                // Bảng tên ánh vàng phía dưới khung
+                const plaque = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.22, 0.04), frameInnerGoldMat);
+                plaque.position.set(0, -posterH / 2 - 0.3, 0.02);
+                group.add(plaque);
+
+                scene.add(group);
+
+                // Tải trực tiếp ảnh sản phẩm tương ứng (1.jpg -> 4.jpg)
+                tryAutoLoadRealImage(idx, art);
+            });
+        }
+
+        // Vẽ ảnh qua canvas theo cơ chế center-crop cover (660x880, tỷ lệ 3:4) để không bị kéo giãn méo hình
+        function createCoverCanvas(imgElement, targetW = 660, targetH = 880) {
+            const canvas = document.createElement('canvas');
+            canvas.width = targetW;
+            canvas.height = targetH;
+            const ctx = canvas.getContext('2d');
+
+            const imgW = imgElement.naturalWidth || imgElement.width;
+            const imgH = imgElement.naturalHeight || imgElement.height;
+            const imgRatio = imgW / imgH;
+            const targetRatio = targetW / targetH;
+
+            let sx = 0, sy = 0, sWidth = imgW, sHeight = imgH;
+            if (imgRatio > targetRatio) {
+                sWidth = imgH * targetRatio;
+                sx = (imgW - sWidth) / 2;
+            } else {
+                sHeight = imgW / targetRatio;
+                sy = (imgH - sHeight) / 2;
+            }
+
+            ctx.drawImage(imgElement, sx, sy, sWidth, sHeight, 0, 0, targetW, targetH);
+            return canvas;
+        }
+
+        // Kiểm tra canvas có bị chặn bảo mật CORS / file:// hay không trước khi đưa vào WebGL
+        function isCanvasSafeForWebGL(canvas) {
+            try {
+                const testCtx = canvas.getContext('2d');
+                testCtx.getImageData(0, 0, 1, 1);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Áp dụng ảnh lên khung tranh 3D an toàn (tuyệt đối không để khung biến thành màu đen)
+        function applySafeImageToFrame(index, imgElement, srcUrl, updateModalOnlyOnTaint = true) {
+            const coverCanvas = createCoverCanvas(imgElement, 660, 880);
+
+            if (isCanvasSafeForWebGL(coverCanvas)) {
+                const texture = new THREE.CanvasTexture(coverCanvas);
+                texture.encoding = THREE.sRGBEncoding;
+                texture.minFilter = THREE.LinearFilter;
+                texture.magFilter = THREE.LinearFilter;
+                texture.generateMipmaps = false;
+                texture.needsUpdate = true;
+
+                const mesh = artworkMeshes[index];
+                if (mesh) {
+                    if (mesh.material.map) mesh.material.map.dispose();
+                    mesh.material.map = texture;
+                    mesh.material.needsUpdate = true;
+                }
+                artworkDataUrls[index] = srcUrl;
+                refreshOpenModalImage(index, srcUrl);
+                return true;
+            }
+
+            // Nếu bị chặn bảo mật (thường xảy ra khi mở trực tiếp file://): giữ nguyên poster đẹp trên tường 3D
+            if (updateModalOnlyOnTaint) {
+                artworkDataUrls[index] = srcUrl;
+                refreshOpenModalImage(index, srcUrl);
+            }
+            notifyLocalFileCorsHint();
+            return false;
+        }
+
+        function refreshOpenModalImage(index, srcUrl) {
+            const modal = document.getElementById('artwork-modal');
+            if (modal && !modal.classList.contains('hidden') && currentArtworkIndex === index) {
+                document.getElementById('modal-image').src = srcUrl;
+            }
+        }
+
+        function notifyLocalFileCorsHint() {
+            if (hasShownLocalCorsHint) return;
+            hasShownLocalCorsHint = true;
+            showToast('Mở file cục bộ bị trình duyệt chặn WebGL: hãy kéo-thả 1.jpg–4.jpg vào trang hoặc đăng GitHub Pages!', '💡', 6000);
+        }
+
+        function tryAutoLoadRealImage(index, art) {
+            const id = art.id;
+            const paths = [
+                `./${id}.jpg`,
+                `${id}.jpg`,
+                `./images/${id}.jpg`,
+                `./${id}.png`,
+                `./images/${id}.png`
+            ];
+
+            function attempt(step) {
+                if (step >= paths.length) return;
+                const url = paths[step];
+
+                // Bước 1: Tải với crossOrigin = 'anonymous' (hoạt động hoàn hảo trên GitHub Pages / HTTP server)
+                const imgCors = new Image();
+                imgCors.crossOrigin = 'anonymous';
+                imgCors.onload = () => {
+                    applySafeImageToFrame(index, imgCors, url, true);
+                };
+                imgCors.onerror = () => {
+                    // Bước 2: Khi mở bằng file://, trình duyệt có thể từ chối crossOrigin; thử tải thường để kiểm tra file tồn tại cho Modal
+                    if (window.location.protocol === 'file:') {
+                        const imgLocal = new Image();
+                        imgLocal.onload = () => {
+                            applySafeImageToFrame(index, imgLocal, url, true);
+                        };
+                        imgLocal.onerror = () => attempt(step + 1);
+                        imgLocal.src = url;
+                    } else {
+                        attempt(step + 1);
+                    }
+                };
+                imgCors.src = url;
+            }
+
+            attempt(0);
+        }
+
+        // Hỗ trợ kéo-thả trực tiếp 1.jpg – 4.jpg vào cửa sổ trình duyệt để xem ngay trên máy
+        function handleDroppedFiles(fileList) {
+            const files = Array.from(fileList || []).filter(f => f.type && f.type.startsWith('image/'));
+            if (files.length === 0) return;
+
+            // Sắp xếp tự nhiên theo số trong tên tệp (1 -> 4)
+            files.sort((a, b) => {
+                const numA = parseInt((a.name.match(/\d+/) || [999])[0], 10);
+                const numB = parseInt((b.name.match(/\d+/) || [999])[0], 10);
+                if (numA !== numB) return numA - numB;
+                return a.name.localeCompare(b.name);
+            });
+
+            const count = Math.min(files.length, ARTWORKS_DATA.length);
+            let loaded = 0;
+
+            for (let i = 0; i < count; i++) {
+                const reader = new FileReader();
+                const slotIndex = i;
+                reader.onload = (ev) => {
+                    const dataUrl = ev.target.result;
+                    const img = new Image();
+                    img.onload = () => {
+                        applySafeImageToFrame(slotIndex, img, dataUrl, true);
+                        loaded++;
+                        if (loaded === count) {
+                            showToast(`Đã hiển thị thành công ${count} ảnh lên tường 3D!`, '🌿');
+                        }
+                    };
+                    img.src = dataUrl;
+                };
+                reader.readAsDataURL(files[i]);
+            }
+        }
+
+        /* ==========================================================================
+           5. ĐIỀU KHIỂN LƯỚT TỚI TRANH, TỰ ĐỘNG THAM QUAN & VỀ GIỮA SẢNH
+           ========================================================================== */
+        function glideToArtwork(index) {
+            const total = ARTWORKS_DATA.length;
+            index = ((index % total) + total) % total;
+            currentArtworkIndex = index;
+
+            const mesh = artworkMeshes[index];
+            const isLeft = mesh.userData.isLeft;
+            const zPos = mesh.userData.worldZ;
+
+            // Đứng trực diện cách tranh khoảng 3.7m để thấy trọn khung lớn
+            glideTargetPos.set(isLeft ? -2.15 : 2.15, 2.45, zPos);
+            glideTargetYaw = isLeft ? Math.PI / 2 : -Math.PI / 2;
+            glideTargetPitch = 0.02;
+            isGliding = true;
+
+            updateCounterUI();
+        }
+
+        function resetToCenterHall() {
+            stopAutoTour();
+            glideTargetPos.set(0, 2.2, 7.5);
+            glideTargetYaw = 0;
+            glideTargetPitch = -0.02;
+            isGliding = true;
+            showToast('Đã trở về vị trí trung tâm sảnh triển lãm', '🏛️');
+        }
+
+        function updateCounterUI() {
+            const numStr = String(currentArtworkIndex + 1).padStart(2, '0');
+            document.getElementById('artwork-counter').textContent = numStr;
+        }
+
+        function toggleAutoTour() {
+            if (isAutoTour) {
+                stopAutoTour();
+            } else {
+                isAutoTour = true;
+                document.getElementById('autotour-icon').textContent = '⏸️';
+                document.getElementById('autotour-text').textContent = 'Dừng tham quan';
+                showToast('Đang tự động tham quan 4 sản phẩm ECO-POLYMER 4.0', '▶️');
+                glideToArtwork(currentArtworkIndex);
+
+                autoTourTimer = setInterval(() => {
+                    if (!isAutoTour) return;
+                    glideToArtwork((currentArtworkIndex + 1) % ARTWORKS_DATA.length);
+                }, 4200);
+            }
+        }
+
+        function stopAutoTour() {
+            if (!isAutoTour) return;
+            isAutoTour = false;
+            clearInterval(autoTourTimer);
+            autoTourTimer = null;
+            document.getElementById('autotour-icon').textContent = '▶️';
+            document.getElementById('autotour-text').textContent = 'Tự động tham quan';
+        }
+
+        /* ==========================================================================
+           7. MODAL PHÓNG TO & THUYẾT MINH GIỌNG TIẾNG VIỆT
+           ========================================================================== */
+        function openArtworkModal(index) {
+            stopAutoTour();
+            stopSpeech();
+            currentArtworkIndex = index;
+            updateCounterUI();
+
+            const art = ARTWORKS_DATA[index];
+            const numStr = String(art.id).padStart(2, '0');
+
+            document.getElementById('modal-image').src = artworkDataUrls[index];
+            document.getElementById('modal-badge').textContent = `Tác phẩm ${numStr} / 04`;
+            document.getElementById('modal-category').textContent = art.category;
+            document.getElementById('modal-title').textContent = art.title;
+            document.getElementById('modal-desc').textContent = art.desc;
+
+            const highlightsEl = document.getElementById('modal-highlights');
+            highlightsEl.innerHTML = art.highlights
+                .map(item => `<div class="font-semibold">${item}</div>`)
+                .join('');
+
+            const modal = document.getElementById('artwork-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeArtworkModal() {
+            stopSpeech();
+            const modal = document.getElementById('artwork-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function toggleSpeech() {
+            if (!('speechSynthesis' in window)) {
+                showToast('Trình duyệt không hỗ trợ đọc giọng nói', '⚠️');
+                return;
+            }
+            if (isSpeaking) {
+                stopSpeech();
+                return;
+            }
+
+            const art = ARTWORKS_DATA[currentArtworkIndex];
+            const textToRead = `Artwork number ${art.id}. ${art.titleEn}. ${art.descEn}`;
+            const utterance = new SpeechSynthesisUtterance(textToRead);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.95;
+
+            // Ưu tiên chọn giọng tiếng Anh (en-US, en-GB, hoặc bất kỳ giọng en-* nào có sẵn)
+            const voices = window.speechSynthesis.getVoices();
+            const enVoice =
+                voices.find(v => v.lang && v.lang.toLowerCase() === 'en-us') ||
+                voices.find(v => v.lang && v.lang.toLowerCase() === 'en-gb') ||
+                voices.find(v => v.lang && v.lang.toLowerCase().startsWith('en'));
+            if (enVoice) utterance.voice = enVoice;
+
+            utterance.onstart = () => {
+                isSpeaking = true;
+                document.getElementById('speak-icon').textContent = '⏹️';
+                document.getElementById('speak-text').textContent = 'Đang thuyết minh (Tiếng Anh)... (Nhấn để dừng)';
+            };
+            utterance.onend = () => stopSpeech();
+            utterance.onerror = () => stopSpeech();
+
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function stopSpeech() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            isSpeaking = false;
+            document.getElementById('speak-icon').textContent = '🔊';
+            document.getElementById('speak-text').textContent = 'Nghe thuyết minh (Tiếng Anh)';
+        }
+
+        function showToast(message, icon = '🌱', duration = 3000) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = message;
+            document.getElementById('toast-icon').textContent = icon;
+            toast.classList.remove('opacity-0', '-translate-y-2.5');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2.5');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, duration);
+        }
+
+        /* ==========================================================================
+           8. SỰ KIỆN TƯƠNG TÁC (CHUỘT, CẢM ỨNG, BÀN PHÍM, RAYCASTING, KÉO-THẢ ẢNH)
+           ========================================================================== */
+        function setupEventListeners() {
+            const container = document.getElementById('canvas-container');
+            const dropOverlay = document.getElementById('drop-overlay');
+            let dragCounter = 0;
+
+            // Kéo-thả ảnh trực tiếp vào cửa sổ trình duyệt
+            window.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                dragCounter++;
+                if (dropOverlay) {
+                    dropOverlay.classList.remove('hidden');
+                    dropOverlay.classList.add('flex');
+                }
+            });
+
+            window.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            window.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dragCounter = Math.max(0, dragCounter - 1);
+                if (dragCounter === 0 && dropOverlay) {
+                    dropOverlay.classList.add('hidden');
+                    dropOverlay.classList.remove('flex');
+                }
+            });
+
+            window.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dragCounter = 0;
+                if (dropOverlay) {
+                    dropOverlay.classList.add('hidden');
+                    dropOverlay.classList.remove('flex');
+                }
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleDroppedFiles(e.dataTransfer.files);
+                }
+            });
+
+            container.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                isGliding = false;
+                stopAutoTour();
+                dragDistance = 0;
+                lastPointerPos = { x: e.clientX, y: e.clientY };
+            });
+
+            window.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - lastPointerPos.x;
+                const dy = e.clientY - lastPointerPos.y;
+                dragDistance += Math.hypot(dx, dy);
+
+                const sensitivity = 0.0038;
+                yaw += dx * sensitivity;
+                pitch += dy * sensitivity;
+                pitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, pitch));
+
+                lastPointerPos = { x: e.clientX, y: e.clientY };
+            });
+
+            window.addEventListener('pointerup', (e) => {
+                if (!isDragging) return;
+                isDragging = false;
+
+                // Nếu nhấp/chạm (không kéo xoay) -> kiểm tra chọn khung tranh 3D
+                if (dragDistance < 8) {
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    const mouse = new THREE.Vector2(
+                        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+                        -((e.clientY - rect.top) / rect.height) * 2 + 1
+                    );
+                    raycaster.setFromCamera(mouse, camera);
+                    const intersects = raycaster.intersectObjects(artworkMeshes);
+                    if (intersects.length > 0) {
+                        const hitIndex = intersects[0].object.userData.artworkIndex;
+                        openArtworkModal(hitIndex);
+                    }
+                }
+            });
+
+            // Điều khiển bàn phím W/A/S/D hoặc mũi tên
+            window.addEventListener('keydown', (e) => {
+                keysPressed[e.code] = true;
+                if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                    isGliding = false;
+                    stopAutoTour();
+                }
+                if (e.code === 'Escape') closeArtworkModal();
+            });
+
+            window.addEventListener('keyup', (e) => {
+                keysPressed[e.code] = false;
+            });
+
+            // Tự động thích ứng kích thước màn hình
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            // Nút điều hướng phía dưới
+            document.getElementById('btn-prev').addEventListener('click', () => {
+                stopAutoTour();
+                glideToArtwork(currentArtworkIndex - 1);
+            });
+            document.getElementById('btn-next').addEventListener('click', () => {
+                stopAutoTour();
+                glideToArtwork(currentArtworkIndex + 1);
+            });
+            document.getElementById('btn-autotour').addEventListener('click', toggleAutoTour);
+            document.getElementById('btn-reset').addEventListener('click', resetToCenterHall);
+
+            // Nút trong Modal
+            document.getElementById('btn-close-modal').addEventListener('click', closeArtworkModal);
+            document.getElementById('artwork-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'artwork-modal') closeArtworkModal();
+            });
+            document.getElementById('btn-speak').addEventListener('click', toggleSpeech);
+
+            document.getElementById('modal-prev').addEventListener('click', () => {
+                const prevIdx = (currentArtworkIndex - 1 + ARTWORKS_DATA.length) % ARTWORKS_DATA.length;
+                openArtworkModal(prevIdx);
+                glideToArtwork(prevIdx);
+            });
+            document.getElementById('modal-next').addEventListener('click', () => {
+                const nextIdx = (currentArtworkIndex + 1) % ARTWORKS_DATA.length;
+                openArtworkModal(nextIdx);
+                glideToArtwork(nextIdx);
+            });
+        }
+
+        /* ==========================================================================
+           9. VÒNG LẶP RENDER 3D
+           ========================================================================== */
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Lướt mượt đến vị trí mục tiêu
+            if (isGliding) {
+                camera.position.lerp(glideTargetPos, 0.068);
+                let diffYaw = ((glideTargetYaw - yaw + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+                yaw += diffYaw * 0.08;
+                pitch += (glideTargetPitch - pitch) * 0.08;
+
+                if (camera.position.distanceTo(glideTargetPos) < 0.04 && Math.abs(diffYaw) < 0.01) {
+                    isGliding = false;
+                }
+            }
+
+            // Di chuyển tự do bằng bàn phím
+            const moveSpeed = 0.11;
+            const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+            const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+
+            if (keysPressed['KeyW'] || keysPressed['ArrowUp']) camera.position.addScaledVector(forward, moveSpeed);
+            if (keysPressed['KeyS'] || keysPressed['ArrowDown']) camera.position.addScaledVector(forward, -moveSpeed);
+            if (keysPressed['KeyA'] || keysPressed['ArrowLeft']) camera.position.addScaledVector(right, -moveSpeed);
+            if (keysPressed['KeyD'] || keysPressed['ArrowRight']) camera.position.addScaledVector(right, moveSpeed);
+
+            // Giới hạn trong không gian phòng
+            camera.position.x = Math.max(ROOM_BOUNDS.minX, Math.min(ROOM_BOUNDS.maxX, camera.position.x));
+            camera.position.z = Math.max(ROOM_BOUNDS.minZ, Math.min(ROOM_BOUNDS.maxZ, camera.position.z));
+
+            camera.rotation.y = yaw;
+            camera.rotation.x = pitch;
+
+            renderer.render(scene, camera);
+        }
+
+        // Khởi chạy ngay vào phòng triển lãm 3D khi trang tải xong
+        window.onload = function () {
+            init3DScene();
+            setupEventListeners();
+            animate();
+        };
+    </script>
+</body>
+</html>
